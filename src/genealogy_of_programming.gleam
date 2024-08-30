@@ -1,3 +1,5 @@
+import dot_env
+import dot_env/env
 import genealogy_of_programming/router
 import gleam/erlang/process
 import mist
@@ -5,13 +7,15 @@ import wisp
 import wisp/wisp_mist
 
 pub fn main() {
-  // This sets the logger to print INFO level logs, and other sensible defaults
-  // for a web application.
+  // Set logging information and fetch secret key from .env file
   wisp.configure_logger()
 
-  // Here we generate a secret key, but in a real application you would want to
-  // load this from somewhere so that it is not regenerated on every restart.
-  let secret_key_base = wisp.random_string(64)
+  dot_env.new()
+  |> dot_env.set_path(".env")
+  |> dot_env.set_debug(False)
+  |> dot_env.load
+
+  let assert Ok(secret_key_base) = env.get_string("SECRET_KEY_BASE")
 
   // Start the Mist web server.
   let assert Ok(_) =
@@ -20,7 +24,6 @@ pub fn main() {
     |> mist.port(8000)
     |> mist.start_http
 
-  // The web server runs in new Erlang process, so put this one to sleep while
-  // it works concurrently.
+  // Put current process to sleep
   process.sleep_forever()
 }
